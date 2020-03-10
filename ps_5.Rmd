@@ -7,5 +7,233 @@ output: html_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(haven)
+library(formattable)
+library(magrittr)
+library(gt)
+
 ```
+
+## Mad Libs
+
+```{r mad_lib_1, echo=FALSE}
+
+voters <- read_dta("raw-data/ns20191226/ns20191226.dta")
+
+mad_1 <- voters %>% 
+  select(gun_registry) %>% 
+  filter(gun_registry != 888) %>% 
+  count() %>% 
+  pull(n) %>% 
+  format(big.mark = ",")
+
+```
+
+**ML 1)** Not all respondents were asked every question. **`r mad_1`** respondents were asked the question about whether the USA should create a gun registry.
+
+```{r mad_lib_2, echo=FALSE}
+
+mad_2 <- voters %>% 
+  select(ban_guns,
+         gun_registry,
+         guns_bg,
+         limit_magazines,
+         statements_gun_rights,
+         household_gun_owner) %>% 
+  filter(gun_registry != 888,
+         statements_gun_rights != 888) %>% 
+  mutate(gun_owner = ifelse(household_gun_owner == 1,
+                            TRUE,
+                            FALSE)) %>% 
+  summarize(mean(gun_owner)) %>% 
+  percent(digits = 2)
+
+```
+
+**ML 2)** Of the respondents that got asked all four gun policy questions, **`r mad_2`** are gun owners. (For the purposes of this question, you can assume that the people who answered “not sure” are not gun owners). Round to 2 digits after the decimal point.
+
+```{r mad_lib_3, echo=FALSE}
+
+no_guns <- voters %>% 
+  select(statements_gun_rights,
+         household_gun_owner) %>% 
+  filter(household_gun_owner == 3,
+         statements_gun_rights == 1:4) %>% 
+  summarize(mean(statements_gun_rights)) %>% 
+  round(digits = 2)
+
+have_guns <- voters %>% 
+  select(statements_gun_rights,
+         household_gun_owner) %>% 
+  filter(household_gun_owner == 1:2, # |
+#           household_gun_owner == 999,       should I include this? No, right?
+         statements_gun_rights == 1:4) %>% 
+  summarize(mean(statements_gun_rights)) %>% 
+  round(digits = 2)
+
+```
+
+**ML 3)** The average “agreement” score (from 1-4) on the statement_gun_rights variable is **`r no_guns`** for those respondents who live in households without guns, while the average “agreement” score in households with guns is **`r have_guns`**. (Calculate the average dropping respondents who weren’t asked, didn’t know, or skipped either question, and round to two digits after the decimal point).
+
+```{r mad_lib_4, echo=FALSE}
+
+voters %>% 
+  filter(age >= 18,
+         age < 30) %>% 
+  select(religion) %>% 
+  as_factor() %>% 
+  table() %>% 
+  as.data.frame()
+
+# AARRGGGHHHH
+
+```
+
+**ML 4)** Another set of questions asks about religion. The first ranked category of religion for the age group of people 18-30 (don’t include 30) is **“X”** . The first-ranked religion category for people 30 and older is **“X”**. Hint: you’re going to need the “labels” that are imported from the dta using haven; we suggest using as_factor to assign the right labels to the religion variable.
+
+```{r mad_lib_5, echo=FALSE}
+
+voters %>% 
+  filter(age >= 18,
+         age < 30) %>% 
+  select(religion) %>% 
+  as_factor() %>% 
+  table() %>% 
+  as.data.frame()
+
+# give up...
+
+```
+
+**ML 5)** Lots of people say that the younger generation has the highest percent of “nones;” people who answer “nothing in particular”, when you ask them their religion. In the 18-30 age group, “nothing in particular” is ranked **X**, while in the 30 and above group, “nothing in particular” is ranked **X**.
+
+```{r mad_lib_6, echo=FALSE}
+
+voters %>% 
+  filter(religion == 12,
+         statements_gun_rights != 888) %>% 
+  select(statements_gun_rights) %>% 
+  as_factor() %>% 
+  table()
+
+# how do I pull out the label???
+
+```
+
+**ML 6)** Consider again the nones (all people who responded “nothing in particular”) when asked about their religion. In this group, the most popular position is to **X** (strongly disagree, disagree, agree, or strongly agree?) that it is more important for the government to control who owns guns than it is for the government to protect the right to own guns (use the variable “statement_gun_rights” and only include respondents who were asked both of these questions).
+
+## Question 2: Simulations with List Columns
+
+### 2a)
+
+```{r question_2a, echo=FALSE}
+
+draw_cards <- function(n) {
+  cards <- c("diamonds", "hearts", "spades", "clubs")
+  sample(cards, n, replace = TRUE)
+}
+
+```
+
+I wrote a function to sample the suit of n cards.
+
+### 2b)
+
+```{r question_2b, echo=FALSE}
+
+two_cards_ten_times <- tibble(draws = map(rep(2, 10), draw_cards))
+
+```
+
+I made a tibble that shows the result of drawing 2 cards 10 times, using map().
+
+### 2c)
+
+```{r question_2c, echo=FALSE}
+
+two_cards_ten_times %<>%
+  mutate(
+    first_red = map_lgl(draws,
+                        ~ ifelse(.[[1]][1] == "hearts" |
+                                   .[[1]][1] == "diamonds",
+                                 TRUE,
+                                 FALSE)))
+
+two_cards_ten_times %<>%
+  mutate(
+    second_red = map_lgl(draws,
+                        ~ ifelse(.[[2]][1] == "hearts" |
+                                   .[[2]][1] == "diamonds",
+                                 TRUE,
+                                 FALSE)))
+
+```
+
+I added two columns (1 for each card drawn) which say whether the card was red (hearts or diamonds) or not.
+
+### 2d)
+
+I added a third new column, showing the color outcome of each draw, and produced the following table:
+
+```{r question_2d, echo=FALSE}
+
+two_cards_ten_times %<>%
+  mutate(outcome = case_when(
+    first_red == TRUE & second_red == TRUE ~ "Both red",
+    first_red == FALSE & second_red == FALSE ~ "Both black",
+    TRUE ~ "Mixed"
+  ))
+
+two_cards_ten_times %>% 
+  gt() %>%
+  tab_header(title = "Drawing Two Cards",
+             subtitle = "Card Colors") %>% 
+  cols_label(draws = "Draw",
+             first_red = "First card red?",
+             second_red = "Second card red?",
+             outcome = "Color Outcome")
+
+```
+
+### 2e)
+
+```{r question_2e, echo=FALSE}
+
+simulation_1000 <- tibble(draws = map(rep(2, 1000), draw_cards)) %>% 
+  mutate(
+    first_red = map_lgl(draws,
+                        ~ ifelse(.[[1]][1] == "hearts" |
+                                   .[[1]][1] == "diamonds",
+                                 TRUE,
+                                 FALSE)))
+
+simulation_1000 %<>%
+  mutate(
+    second_red = map_lgl(draws,
+                        ~ ifelse(.[[2]][1] == "hearts" |
+                                   .[[2]][1] == "diamonds",
+                                 TRUE,
+                                 FALSE)))
+  
+simulation_1000 %<>%
+  mutate(outcome = case_when(
+    first_red == TRUE & second_red == TRUE ~ "Both red",
+    first_red == FALSE & second_red == FALSE ~ "Both black",
+    TRUE ~ "Mixed")
+  )
+  
+percent_mixed <- simulation_1000 %>% 
+  mutate(mixed = ifelse(outcome == "Mixed",
+                        TRUE,
+                        FALSE)) %>% 
+  summarize(mean(mixed)) %>% 
+  percent(digits = 2)
+
+```
+
+A simulation of drawing two cards 1000 times results in **`r percent_mixed`** of draws having "mixed" colors.
+
+
 
