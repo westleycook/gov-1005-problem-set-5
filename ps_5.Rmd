@@ -13,6 +13,7 @@ library(haven)
 library(formattable)
 library(magrittr)
 library(gt)
+library(infer)
 
 ```
 
@@ -171,7 +172,7 @@ two_cards_ten_times %<>%
 
 ```
 
-I added two columns (1 for each card drawn) which say whether the card was red (hearts or diamonds) or not.
+I added two columns (one for each card drawn) which say whether the card was red (hearts or diamonds) or not.
 
 ### 2d)
 
@@ -233,7 +234,84 @@ percent_mixed <- simulation_1000 %>%
 
 ```
 
-A simulation of drawing two cards 1000 times results in **`r percent_mixed`** of draws having "mixed" colors.
+A simulation of drawing two cards 1000 times resulted in **`r percent_mixed`** of draws having "mixed" colors.
+
+## Question 3: Modeling a Study Population
+
+```{r question_3, echo=FALSE}
+
+pop <- tibble(id = 1:6120,
+              grade = c(rep("freshman", 1800),
+                        rep("junior", 1570),
+                        rep("senior", 1300),
+                        rep("sophomore", 1450)))
+
+pop1 <- pop %>% 
+  group_by(grade) %>% 
+  count() %>% 
+  mutate(pct = n / nrow(pop))
+  
+ggplot(pop1, aes(grade, pct)) +
+  geom_col()  +
+  theme_classic() +
+  labs(title = "University Composition by Grade",
+       subtitle = "Entire Study Population") +
+  scale_y_continuous(labels = scales::percent)
+
+# need to add text labels showing value in each column
+
+```
+
+
+We’re going to start by generating our own study population, a “university” full of 1800 freshmen, 1450 sophomores, 1570 juniors, and 1300 seniors. Using rep, create a tibble with 6120 rows, where each row represents a student. Your tibble should have an ID column (1:6120) a “grade” column for each student.
+
+Make a simple bar chart showing the population of your university. Make sure that your graph, like ours, shows the proportion of each group in the population.
+
+## Question 4: Sampling
+
+```{r question_4, echo=FALSE}
+
+samples <- set.seed(02139) %>% 
+  rep_sample_n(tbl = pop, size = 25, replace = FALSE, reps = 5000) %>% 
+  group_by(replicate, grade) %>%
+  count() %>% 
+  mutate(n_freshmen = ifelse(grade == "freshman",
+                             n,
+                             NA)) %>% 
+  group_by(replicate) %>% 
+  mutate(pct_freshmen = n_freshmen / 25)
+  
+
+samples %>% 
+  subset(!is.na(pct_freshmen)) %>% 
+  ggplot(aes(pct_freshmen)) +
+  geom_bar() +
+  theme_classic() +
+  scale_x_continuous(labels = scales::percent,
+                     breaks = c(0, .1, .2, .3, .4, .5, .6)) +
+  labs(title = "Sampling Distribution of Percent Freshmen",
+       subtitle = "From 5,000 Samples of 25 Students") +
+  ylab("Count") +
+  xlab("Percent Freshmen")
+
+# Add count to bars??
+
+```
+
+Usually in the real world, our populations are too big or difficult to measure, so we take a sample to try and gauge the relative proportion of each group. Using rep_sample_n from the infer package, draw 5000 samples of 25 students each from the population from question 3. Use set.seed(02139) so that your randomly drawn distributions have the same values as ours. Save the percent freshmen in each sample. Plot the distribution of percent freshmen in a nice plot.
+
+## Question 5: 
+
+```{r question_5, echo=FALSE}
 
 
 
+```
+
+First, create a list of four different sizes (25,50,100,500). Use sizes <- set_names(sizes, names = sizes), to make sizes a “named” list, which will help R cycle through your code.
+
+Reset the seed to 02139. Use map_df to call rep_sample_n to sample from your university tibble, using size as an input. Your output should be a tibble with 3,375,000 rows and four columns; one for the draw number (1:5000), one for the size (25,50,100, or 500), the student’s ID, and their grade. If you’re stuck on how to cycle through the elements of the “sizes” list, try using size =. in your map_df() expression, and then telling R what the .id stands for outside the parentheses. You don’t need to print this tibble
+
+Use a summarize function to count the number of freshmen in each sample, and then take the proportion. Your tibble should now have 20,000 rows; one for each draw.
+
+Using geom_density, plot the distribution of the proportion of freshmen by sample size. Your plot should look roughly like this:
