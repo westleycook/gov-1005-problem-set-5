@@ -304,7 +304,43 @@ Usually in the real world, our populations are too big or difficult to measure, 
 
 ```{r question_5, echo=FALSE}
 
+sizes <- list(25, 50, 100, 500)
+sizes <- set_names(sizes, names = sizes)
 
+# sizes_p <- list(2, 3, 4, 5)
+# sizes_p <- set_names(sizes_p, names = sizes_p)
+# 
+# map_sample_practice <- function(size){
+#   set.seed(02139) %>% 
+#   rep_sample_n(tbl = pop, size = size, replace = FALSE, reps = 10) %>% 
+#     mutate(size = size)
+# }
+# 
+# sample_dist_practice <- map_df(sizes_p, map_sample_practice)
+
+# sample_dist_practice %>% 
+#   group_by(replicate) %>% 
+#   summarize(n_freshmen = sum(grade == "freshman"))
+
+map_sample <- function(size){
+  set.seed(02139) %>% 
+    rep_sample_n(tbl = pop, size = size, replace = FALSE, reps = 5000) %>% 
+    mutate(size = size)
+}
+
+sample_dist <- map_df(sizes, map_sample)
+
+grouped_sample_dist <- sample_dist %>%
+  group_by(replicate, size) %>% 
+  summarize(n_freshmen = sum(grade == "freshman")) 
+
+with_prop_freshmen <- grouped_sample_dist %>% 
+  mutate(pct_freshmen = n_freshmen / size)
+
+with_prop_freshmen %>%
+  ggplot(aes(pct_freshmen, colour = size)) +
+  geom_density()
+ 
 
 ```
 
