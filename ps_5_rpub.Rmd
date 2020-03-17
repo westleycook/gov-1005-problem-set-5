@@ -1,0 +1,48 @@
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(infer)
+library(magrittr)
+
+```
+
+```{r publish_plot, echo=FALSE}
+
+pop <- tibble(id = 1:6120,
+              grade = c(rep("freshman", 1800),
+                        rep("junior", 1570),
+                        rep("senior", 1300),
+                        rep("sophomore", 1450)))
+
+sizes <- list(25, 50, 100, 500)
+sizes <- set_names(sizes, names = sizes)
+
+map_sample <- function(size){
+  set.seed(02139) %>% 
+    rep_sample_n(tbl = pop, size = size, replace = FALSE, reps = 5000) %>% 
+    mutate(size = size)
+}
+
+sample_dist <- map_df(sizes, map_sample)
+
+grouped_sample_dist <- sample_dist %>%
+  group_by(replicate, size) %>% 
+  summarize(n_freshmen = sum(grade == "freshman")) 
+
+with_prop_freshmen <- grouped_sample_dist %>% 
+  mutate(pct_freshmen = n_freshmen / size)
+
+with_prop_freshmen %>%
+  ggplot(aes(x = pct_freshmen,
+             fill = as.factor(size))) +
+  geom_density(alpha = 0.2) +
+  theme_classic() +
+  labs(title = "Distribution of Percentage Freshmen",
+       subtitle = "Average sampled percentage gets closer to true percentage as sample size increases") +
+  ylab("Count") +
+  xlab("Proportion of freshmen") +
+  scale_fill_discrete(name = "Sample Size")
+
+```
+
