@@ -44,5 +44,7 @@ with_prop_freshmen %>%
   xlab("Proportion of freshmen") +
   scale_fill_discrete(name = "Sample Size")
 
+ggsave("dist_by_sample_size.png")
+
 ```
 
