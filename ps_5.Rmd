@@ -81,19 +81,34 @@ have_guns <- voters %>%
 
 ```{r mad_lib_4, echo=FALSE}
 
-voters %>% 
+mad_4a <- voters %>% 
   filter(age >= 18,
          age < 30) %>% 
-  select(religion) %>% 
-  as_factor() %>% 
-  table() %>% 
-  as.data.frame()
+  group_by(religion) %>% 
+  count(religion) %>% 
+  arrange(desc(n)) %>% 
+  mutate(religion_names = as_factor(religion)) %>% 
+  mutate(religion_names = as.character(religion_names)) %>% 
+  as.data.frame() %>% 
+  slice(1) %>% 
+  pull(religion_names)
+
+mad_4b <- voters %>% 
+  filter(age >= 30) %>% 
+  group_by(religion) %>% 
+  count(religion) %>% 
+  arrange(desc(n)) %>% 
+  mutate(religion_names = as_factor(religion)) %>% 
+  mutate(religion_names = as.character(religion_names)) %>% 
+  as.data.frame() %>% 
+  slice(1) %>% 
+  pull(religion_names)
 
 # AARRGGGHHHH
 
 ```
 
-**ML 4)** Another set of questions asks about religion. The first ranked category of religion for the age group of people 18-30 (don’t include 30) is **“X”** . The first-ranked religion category for people 30 and older is **“X”**. Hint: you’re going to need the “labels” that are imported from the dta using haven; we suggest using as_factor to assign the right labels to the religion variable.
+**ML 4)** Another set of questions asks about religion. The first ranked category of religion for the age group of people 18-30 (don’t include 30) is **"`r mad_4a`."** The first-ranked religion category for people 30 and older is **“`r mad_4b`.”** Hint: you’re going to need the “labels” that are imported from the dta using haven; we suggest using as_factor to assign the right labels to the religion variable.
 
 ```{r mad_lib_5, echo=FALSE}
 
@@ -362,6 +377,9 @@ Use a summarize function to count the number of freshmen in each sample, and the
 View my published plot at https://rpubs.com/wkcook/585752
 
 ```{r question_6, echo=FALSE}
+
+# Should I be printing a call to print the saved plot, or actually running the
+# code to print it?
 
 include_graphics("dist_by_sample_size.png")
 
