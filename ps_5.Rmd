@@ -14,6 +14,7 @@ library(formattable)
 library(magrittr)
 library(gt)
 library(infer)
+library(knitr)
 
 ```
 
@@ -348,7 +349,6 @@ with_prop_freshmen %>%
   xlab("Proportion of freshmen") +
   scale_fill_discrete(name = "Sample Size")
 
-
 ```
 
 First, create a list of four different sizes (25,50,100,500). Use sizes <- set_names(sizes, names = sizes), to make sizes a “named” list, which will help R cycle through your code.
@@ -357,6 +357,17 @@ Reset the seed to 02139. Use map_df to call rep_sample_n to sample from your uni
 
 Use a summarize function to count the number of freshmen in each sample, and then take the proportion. Your tibble should now have 20,000 rows; one for each draw.
 
+## Question 6: Publish the Plot
+
+View my published plot at https://rpubs.com/wkcook/585752
+
+```{r question_6, echo=FALSE}
+
+include_graphics("dist_by_sample_size.png")
+
+```
+
+## Question 7: Reprex
 
 
 Using geom_density, plot the distribution of the proportion of freshmen by sample size. Your plot should look roughly like this:
