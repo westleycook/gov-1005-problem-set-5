@@ -1,7 +1,7 @@
 ---
 title: "Problem Set 5"
 author: "Westley Cook"
-date: "3/9/2020"
+date: "3/18/2020"
 output: html_document
 ---
 
@@ -54,7 +54,7 @@ mad_2 <- voters %>%
 
 ```
 
-**ML 2)** Of the respondents that got asked all four gun policy questions, **`r mad_2`** are gun owners. (For the purposes of this question, you can assume that the people who answered “not sure” are not gun owners). Round to 2 digits after the decimal point.
+**ML 2)** Of the respondents that got asked all four gun policy questions, **`r mad_2`** are gun owners.
 
 ```{r mad_lib_3, echo=FALSE}
 
@@ -77,13 +77,12 @@ have_guns <- voters %>%
 
 ```
 
-**ML 3)** The average “agreement” score (from 1-4) on the statement_gun_rights variable is **`r no_guns`** for those respondents who live in households without guns, while the average “agreement” score in households with guns is **`r have_guns`**. (Calculate the average dropping respondents who weren’t asked, didn’t know, or skipped either question, and round to two digits after the decimal point).
+**ML 3)** The average “agreement” score (from 1-4) on the statement_gun_rights variable is **`r no_guns`** for those respondents who live in households without guns, while the average “agreement” score in households with guns is **`r have_guns`**.
 
 ```{r mad_lib_4, echo=FALSE}
 
 mad_4a <- voters %>% 
-  filter(age >= 18,
-         age < 30) %>% 
+  filter(age < 30) %>% 
   group_by(religion) %>% 
   count(religion) %>% 
   arrange(desc(n)) %>% 
@@ -108,38 +107,55 @@ mad_4b <- voters %>%
 
 ```
 
-**ML 4)** Another set of questions asks about religion. The first ranked category of religion for the age group of people 18-30 (don’t include 30) is **"`r mad_4a`."** The first-ranked religion category for people 30 and older is **“`r mad_4b`.”** Hint: you’re going to need the “labels” that are imported from the dta using haven; we suggest using as_factor to assign the right labels to the religion variable.
+**ML 4)** Another set of questions asks about religion. The first ranked category of religion for the age group of people 18-30 (don’t include 30) is **"`r mad_4a`."** The first-ranked religion category for people 30 and older is **“`r mad_4b`.”**
 
 ```{r mad_lib_5, echo=FALSE}
 
-voters %>% 
-  filter(age >= 18,
-         age < 30) %>% 
-  select(religion) %>% 
-  as_factor() %>% 
-  table() %>% 
-  as.data.frame()
+mad_5a <- voters %>% 
+  filter(age < 30) %>% 
+  group_by(religion) %>% 
+  count(religion) %>% 
+  mutate(religion_names = as_factor(religion)) %>% 
+  arrange(desc(n)) %>% 
+  as.data.frame() %>% 
+  mutate(rank = 1:14) %>% 
+  filter(religion_names == "Nothing in particular") %>% 
+  pull(rank)
+
+mad_5b <- voters %>% 
+  filter(age >= 30) %>% 
+  group_by(religion) %>% 
+  count(religion) %>% 
+  mutate(religion_names = as_factor(religion)) %>% 
+  arrange(desc(n)) %>% 
+  as.data.frame() %>% 
+  mutate(rank = 1:14) %>% 
+  filter(religion_names == "Nothing in particular") %>% 
+  pull(rank)
 
 # give up...
 
 ```
 
-**ML 5)** Lots of people say that the younger generation has the highest percent of “nones;” people who answer “nothing in particular”, when you ask them their religion. In the 18-30 age group, “nothing in particular” is ranked **X**, while in the 30 and above group, “nothing in particular” is ranked **X**.
+**ML 5)** Lots of people say that the younger generation has the highest percent of “nones” (people who answer “nothing in particular”, when you ask them their religion). In the 18-30 age group, “nothing in particular” is ranked **`r mad_5a`**, while in the 30 and above group, “nothing in particular” is ranked **`r mad_5b`**.
 
 ```{r mad_lib_6, echo=FALSE}
 
-voters %>% 
+mad_6 <- voters %>% 
   filter(religion == 12,
          statements_gun_rights != 888) %>% 
-  select(statements_gun_rights) %>% 
-  as_factor() %>% 
-  table()
-
-# how do I pull out the label???
+  group_by(statements_gun_rights) %>% 
+  count(statements_gun_rights) %>% 
+  arrange(desc(n)) %>% 
+  mutate(gun_position = as_factor(statements_gun_rights)) %>% 
+  mutate(gun_position = as.character(gun_position)) %>% 
+  as.data.frame() %>% 
+  slice(1) %>% 
+  pull(gun_position)
 
 ```
 
-**ML 6)** Consider again the nones (all people who responded “nothing in particular”) when asked about their religion. In this group, the most popular position is to **X** (strongly disagree, disagree, agree, or strongly agree?) that it is more important for the government to control who owns guns than it is for the government to protect the right to own guns (use the variable “statement_gun_rights” and only include respondents who were asked both of these questions).
+**ML 6)** In the group of "nones," the most popular position is to **"`r mad_6`"** that it is more important for the government to control who owns guns than it is for the government to protect the right to own guns.
 
 ## Question 2: Simulations with List Columns
 
@@ -262,12 +278,12 @@ pop <- tibble(id = 1:6120,
                         rep("senior", 1300),
                         rep("sophomore", 1450)))
 
-pop1 <- pop %>% 
+pop_w_pct <- pop %>% 
   group_by(grade) %>% 
   count() %>% 
   mutate(pct = n / nrow(pop))
   
-ggplot(pop1, aes(grade, pct)) +
+ggplot(pop_w_pct, aes(grade, pct)) +
   geom_col()  +
   theme_classic() +
   labs(title = "University Composition by Grade",
@@ -277,11 +293,6 @@ ggplot(pop1, aes(grade, pct)) +
 # need to add text labels showing value in each column
 
 ```
-
-
-We’re going to start by generating our own study population, a “university” full of 1800 freshmen, 1450 sophomores, 1570 juniors, and 1300 seniors. Using rep, create a tibble with 6120 rows, where each row represents a student. Your tibble should have an ID column (1:6120) a “grade” column for each student.
-
-Make a simple bar chart showing the population of your university. Make sure that your graph, like ours, shows the proportion of each group in the population.
 
 ## Question 4: Sampling
 
@@ -313,8 +324,6 @@ samples %>%
 # Add count to bars??
 
 ```
-
-Usually in the real world, our populations are too big or difficult to measure, so we take a sample to try and gauge the relative proportion of each group. Using rep_sample_n from the infer package, draw 5000 samples of 25 students each from the population from question 3. Use set.seed(02139) so that your randomly drawn distributions have the same values as ours. Save the percent freshmen in each sample. Plot the distribution of percent freshmen in a nice plot.
 
 ## Question 5: 
 
@@ -366,12 +375,6 @@ with_prop_freshmen %>%
 
 ```
 
-First, create a list of four different sizes (25,50,100,500). Use sizes <- set_names(sizes, names = sizes), to make sizes a “named” list, which will help R cycle through your code.
-
-Reset the seed to 02139. Use map_df to call rep_sample_n to sample from your university tibble, using size as an input. Your output should be a tibble with 3,375,000 rows and four columns; one for the draw number (1:5000), one for the size (25,50,100, or 500), the student’s ID, and their grade. If you’re stuck on how to cycle through the elements of the “sizes” list, try using size =. in your map_df() expression, and then telling R what the .id stands for outside the parentheses. You don’t need to print this tibble
-
-Use a summarize function to count the number of freshmen in each sample, and then take the proportion. Your tibble should now have 20,000 rows; one for each draw.
-
 ## Question 6: Publish the Plot
 
 View my published plot at https://rpubs.com/wkcook/585752
@@ -388,4 +391,4 @@ include_graphics("dist_by_sample_size.png")
 ## Question 7: Reprex
 
 
-Using geom_density, plot the distribution of the proportion of freshmen by sample size. Your plot should look roughly like this:
+
