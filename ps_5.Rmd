@@ -338,9 +338,16 @@ with_prop_freshmen <- grouped_sample_dist %>%
   mutate(pct_freshmen = n_freshmen / size)
 
 with_prop_freshmen %>%
-  ggplot(aes(pct_freshmen, colour = size)) +
-  geom_density()
- 
+  ggplot(aes(x = pct_freshmen,
+             fill = as.factor(size))) +
+  geom_density(alpha = 0.2) +
+  theme_classic() +
+  labs(title = "Distribution of Percentage Freshmen",
+       subtitle = "Average sampled percentage gets closer to true percentage as sample size increases") +
+  ylab("Count") +
+  xlab("Proportion of freshmen") +
+  scale_fill_discrete(name = "Sample Size")
+
 
 ```
 
@@ -349,5 +356,7 @@ First, create a list of four different sizes (25,50,100,500). Use sizes <- set_n
 Reset the seed to 02139. Use map_df to call rep_sample_n to sample from your university tibble, using size as an input. Your output should be a tibble with 3,375,000 rows and four columns; one for the draw number (1:5000), one for the size (25,50,100, or 500), the student’s ID, and their grade. If you’re stuck on how to cycle through the elements of the “sizes” list, try using size =. in your map_df() expression, and then telling R what the .id stands for outside the parentheses. You don’t need to print this tibble
 
 Use a summarize function to count the number of freshmen in each sample, and then take the proportion. Your tibble should now have 20,000 rows; one for each draw.
+
+
 
 Using geom_density, plot the distribution of the proportion of freshmen by sample size. Your plot should look roughly like this:
