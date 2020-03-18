@@ -15,6 +15,7 @@ library(magrittr)
 library(gt)
 library(infer)
 library(knitr)
+library(reprex)
 
 ```
 
@@ -180,7 +181,7 @@ two_cards_ten_times <- tibble(draws = map(rep(2, 10), draw_cards))
 
 ```
 
-I made a tibble that shows the result of drawing 2 cards 10 times, using map().
+I made a tibble that shows the result of drawing 2 cards 10 times.
 
 ### 2c)
 
@@ -381,14 +382,23 @@ View my published plot at https://rpubs.com/wkcook/585752
 
 ```{r question_6, echo=FALSE}
 
-# Should I be printing a call to print the saved plot, or actually running the
-# code to print it?
+# If I were to include a call to print my saved plot, it would look like this:
 
-include_graphics("dist_by_sample_size.png")
+# include_graphics("dist_by_sample_size.png")
+
+# But I already printed the plot under question 5, so I saw no need to print it
+# again here
 
 ```
 
 ## Question 7: Reprex
 
+Find my reprex at https://github.com/GOV-1005-Spring-2020/problem-set-5-westleycook/issues/1
 
+## Question 8: Understanding Sampling
 
+Although my country has ten states, the population is extraordinarily dense; the five major cities are home to 70% of the total population. Because I only care about the popular vote, **I'll spend the last of my polling budget running 5 polls of 1,000 randomly sampled people** (one in each major city).
+
+The best way to obtain accurate information about the voting preferences of the **population** (every person in my country) would be a **census**, but unfortunately that isn't possible; unlike Mike Bloomberg, I just don't have that kind of money to spare. The next best way to get the info I want about the **population parameter** (the proportion of voters who will choose me) is through **sampling**. A larger sample size means less variability, which should translate to a more accurate **point estimate** than we would obtain with smaller samples. In other words, with a few large samples rather than more smaller samples, we can be more confident that the estimates we make from our samples are accurately describing the population. This is important! I want to know with confidence what matters to urban voters and where to focus my efforts to win their vote.
+
+Furthermore, because 70% of the total population lives in the five major cities, our **random samples** across those cities can be assumed to be fairly **representative** and **generalizable** - that is, the sample's characteristics should approximate the population's characteristics, meaning the sample proportion of people who will vote for me should be close to the actual population proportion of people who will vote for me. Of course, by focusing exclusively on the urban areas in these polls, we're ignoring the 30% of the country that live elsewhere, and our results may not be generalizable to them; our sample is **biased** toward urban voters. But prior polls have estimated that in rural areas I have a double-digit lead over my rivals, so I'm not too concerned about that.
