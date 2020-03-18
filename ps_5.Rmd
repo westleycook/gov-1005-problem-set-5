@@ -479,7 +479,13 @@ ggplot(pop_w_pct, aes(grade, pct)) +
 # freshmen in each sample. It then plots the sampling distribution of percentage
 # freshmen.
 
-
+# I first use set.seed() as instructed, to make sure my results are the same as
+# the instructors'. I then use rep_sample_n to pull 5,000 samples of size 25
+# from the pop tibble, NOT replacing (because sampling people in real life
+# wouldn't include replacement). I group_by() replicate and grade before
+# counting, to find the number of students per grade in each sample, and make
+# two new columns: the first shows the number of freshmen in each sample, and
+# the second shows the percentage of freshmen in a sample.
 
 samples <- set.seed(02139) %>% 
   rep_sample_n(tbl = pop, size = 25, replace = FALSE, reps = 5000) %>% 
@@ -490,6 +496,12 @@ samples <- set.seed(02139) %>%
                              NA)) %>%
   mutate(pct_freshmen = n_freshmen / 25)
   
+# Plotting the proportion of freshmen per sample in the data above by first
+# taking a subset() to remove all non-freshmen values, then piping the data to
+# ggplot() and making a bar plot of pct_freshmen. As in question 3, I use
+# theme_classic() for a clean-looking plot. I customize the labels on the x axis
+# to label at every 10% mark between 0 and 60%, and add a descriptive title and
+# subtitle. I also give both axes nice-looking titles.
 
 samples %>% 
   subset(!is.na(pct_freshmen)) %>% 
@@ -502,8 +514,6 @@ samples %>%
        subtitle = "From 5,000 Samples of 25 Students") +
   ylab("Count") +
   xlab("Percent Freshmen")
-
-# Add count to bars??
 
 ```
 
