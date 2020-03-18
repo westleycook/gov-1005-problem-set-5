@@ -426,16 +426,38 @@ A simulation of drawing two cards 1000 times resulted in **`r percent_mixed`** o
 
 ```{r question_3, echo=FALSE}
 
+# This r chunk creates a tibble with the study population (showing each
+# student's id and grade) and another tibble with the population grouped by
+# grade, showing the number of students in each grade and the percent of the
+# total student body for each grade. It then plots the latter tibble.
+
+# Making a tibble with the study population, giving IDs to students from 1:6120
+# and giving the grade column values corresponding to the number of students per
+# class as designated in the question prompt. Note that the grades will not be
+# in ascending order (freshman->sophomore->junior->senior) but rather in the
+# order in which they appear in the plot I'll be replicating.
+
 pop <- tibble(id = 1:6120,
               grade = c(rep("freshman", 1800),
                         rep("junior", 1570),
                         rep("senior", 1300),
                         rep("sophomore", 1450)))
 
+# Creating a new tibble from the old one, grouping by grade and counting to get
+# the number of students per grade. Adding a new column to show the percentage
+# of students who belong to each grade.
+
 pop_w_pct <- pop %>% 
   group_by(grade) %>% 
   count() %>% 
   mutate(pct = n / nrow(pop))
+
+# Creating a nice plot with the grouped data in pop_w_pct. I use theme_classic()
+# to get rid of clutter in the background, and add labels using the text in the
+# plot I'm replicating from the question prompt. I call scales::percent to
+# format the y axis labels appropriately, and use geom_text() to map the
+# percentage values of each column on top of the columns (using vjust = -0.5 to
+# align them in an aesthetically pleasing way).
   
 ggplot(pop_w_pct, aes(grade, pct)) +
   geom_col()  +
@@ -446,13 +468,18 @@ ggplot(pop_w_pct, aes(grade, pct)) +
   geom_text(aes(label = percent(pct, digits = 1),
                 vjust = -0.5))
 
-# need to add text labels showing value in each column
-
 ```
 
 ## Question 4: Sampling
 
 ```{r question_4, echo=FALSE}
+
+# This r chunk creates a tibble showing the results of replicating 5,000 samples
+# of 25 students each, with columns showing the number and percentage of
+# freshmen in each sample. It then plots the sampling distribution of percentage
+# freshmen.
+
+
 
 samples <- set.seed(02139) %>% 
   rep_sample_n(tbl = pop, size = 25, replace = FALSE, reps = 5000) %>% 
@@ -460,8 +487,7 @@ samples <- set.seed(02139) %>%
   count() %>% 
   mutate(n_freshmen = ifelse(grade == "freshman",
                              n,
-                             NA)) %>% 
-  group_by(replicate) %>% 
+                             NA)) %>%
   mutate(pct_freshmen = n_freshmen / 25)
   
 
