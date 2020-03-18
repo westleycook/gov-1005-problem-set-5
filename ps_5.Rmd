@@ -521,23 +521,47 @@ samples %>%
 
 ```{r question_5, echo=FALSE}
 
-sizes <- list(25, 50, 100, 500)
-sizes <- set_names(sizes, names = sizes)
+# This r chunk uses a list of four sample sizes to create a tibble with sampling
+# distributions of 5,000 repetitions for each sample size. It then plots the
+# distribution by sample size.
+
+# It took me a while to figure out how to create the distribution properly; I
+# still struggle a bit to wrap my head around what the map_* functions do and
+# how they work. One thing that helped this time was doing what we often do in
+# class: trying to make sure my code was working properly by using small sample
+# sizes first and afterward switching to the larger sizes stipulated in the
+# question prompt. The commented-out code below is what I used to figure out
+# what I was doing (comments explaining the code are included below, with the
+# actual code that shows up in the knit .html).
 
 # sizes_p <- list(2, 3, 4, 5)
 # sizes_p <- set_names(sizes_p, names = sizes_p)
-# 
+ 
 # map_sample_practice <- function(size){
 #   set.seed(02139) %>% 
 #   rep_sample_n(tbl = pop, size = size, replace = FALSE, reps = 10) %>% 
 #     mutate(size = size)
 # }
-# 
+
 # sample_dist_practice <- map_df(sizes_p, map_sample_practice)
 
 # sample_dist_practice %>% 
 #   group_by(replicate) %>% 
 #   summarize(n_freshmen = sum(grade == "freshman"))
+
+# Once I got all of this figured out, it was easy to just make the values
+# larger.
+
+# Creating a list with the desired sample size values, and passing it through
+# the set_names() function to create a named list
+
+sizes <- list(25, 50, 100, 500)
+sizes <- set_names(sizes, names = sizes)
+
+# Creating a function through which I'll be able to pass the values in the sizes
+# list; the code for rep_sample_n is the same as in question 5, but the mutate()
+# function adds a size column for easy grouping once I've used map_df() to put
+# all four distributions in the same dataframe
 
 map_sample <- function(size){
   set.seed(02139) %>% 
@@ -545,19 +569,49 @@ map_sample <- function(size){
     mutate(size = size)
 }
 
+# Creating the sampling distribution, passing each value from my list of sample
+# sizes through the function to create one large dataframe containing four
+# sampling distributions of different sizes with 5,000 repetitions each
+
 sample_dist <- map_df(sizes, map_sample)
+
+# Modifying the sampling distribution, grouping by replicate and size to create
+# a new object in which the data is separated by size and sample number. Also
+# creating a new column with the number of freshmen for each replication and
+# sample size.
 
 grouped_sample_dist <- sample_dist %>%
   group_by(replicate, size) %>% 
   summarize(n_freshmen = sum(grade == "freshman")) 
 
+# Modifying the sampling distribution by adding a column showing the proportion
+# of freshmen for each replication and sample size.
+
 with_prop_freshmen <- grouped_sample_dist %>% 
   mutate(pct_freshmen = n_freshmen / size)
 
+## Plotting the modified distribution
+
 with_prop_freshmen %>%
   ggplot(aes(x = pct_freshmen,
+             
+# mapping size onto color, but formatting size as a factor first (I tried for a
+# long time before I thought of this, and nothing else worked)
+             
              fill = as.factor(size))) +
+  
+# Using geom_density() to get a smoothed plot, with alpha = 0.2 to add some
+# transparency and make it easier to see all four curves
+  
   geom_density(alpha = 0.2) +
+  
+# Using theme_classic() again for its clean look, and adding descriptive title,
+# subtitle, axes labels, and legend name. Note that the subtitle line exceeds
+# the tidyverse style guide suggestion for <80 characters per line, because I
+# couldn't replicate the long text from the plot shown in the question prompt
+# without going past 80 characters, and I couldn't get the plot to print
+# correctly if I tried to break up the subtitle string
+  
   theme_classic() +
   labs(title = "Distribution of Percentage Freshmen",
        subtitle = "Average sampled percentage gets closer to true percentage as sample size increases") +
