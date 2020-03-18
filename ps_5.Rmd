@@ -10,13 +10,36 @@ output: html_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
+# tidyverse is a standard first load
+
 library(tidyverse)
+
+# loading haven to read in and work with dta voter data
+
 library(haven)
+
+# loading formattable for ease of formatting decimals as percentages
+
 library(formattable)
+
+# loading magrittr for its assignment pipe operator (question 2c and 2d)
+
 library(magrittr)
+
+# loading gt for making a nice table in question 2
+
 library(gt)
+
+# loading infer for question 4 (rep_sample_n)
+
 library(infer)
+
+# loading knitr for question 6 (include_graphics)
+
 library(knitr)
+
+# loading reprex for question 7 (reprex)
+
 library(reprex)
 
 ```
@@ -25,13 +48,27 @@ library(reprex)
 
 ```{r mad_lib_1, echo=FALSE}
 
+# This r chunk assigns an object to insert in-line for mad lib 1
+
+# learning how to use read_dta was simple enough
+
 voters <- read_dta("raw-data/ns20191226/ns20191226.dta")
 
+# used glimpse(voters) and View(voters) to get a sense for what the data looked
+# like. Also spent some time in the codebook to figure out what all the
+# different variables and values represented
+
+# Found the gun_registry variable and the code for its values in the codebook;
+# filtered for everything except 888 ("not asked"). Ran count() and it gave me
+# the count for each value, so I summed the counts to find the total number of
+# people who were asked the gun registry question. Added a commat to niceley
+# format the answer for the .html
+
 mad_1 <- voters %>% 
-  select(gun_registry) %>% 
   filter(gun_registry != 888) %>% 
-  count() %>% 
-  pull(n) %>% 
+  count(gun_registry) %>% 
+  summarize(sum(n)) %>% 
+  pull() %>% 
   format(big.mark = ",")
 
 ```
@@ -40,13 +77,19 @@ mad_1 <- voters %>%
 
 ```{r mad_lib_2, echo=FALSE}
 
+# This r chunk assigns an object to insert in-line for mad lib 2
+
+# Started by selecting just the relevant variables (the four gun policy
+# questions and household_gun_owner) to make the data easier to look at and see
+# what needed to be done. Could see from the codebook that only gun_registry and
+# statements_gun_rights had people who weren't asked, so I assumed everyone had
+# been asked the other two gun policy questions and filtered the data to keep
+# only those who were asked both gun_registry and statements_gun_rights. I then
+# added a new lgl column to tell me if a person was a gun owner, and took the
+# mean (which treats TRUE as 1 and FALSE as 0) to find the percentage who owned
+# guns. Added percent() at the end to format nicely.
+
 mad_2 <- voters %>% 
-  select(ban_guns,
-         gun_registry,
-         guns_bg,
-         limit_magazines,
-         statements_gun_rights,
-         household_gun_owner) %>% 
   filter(gun_registry != 888,
          statements_gun_rights != 888) %>% 
   mutate(gun_owner = ifelse(household_gun_owner == 1,
@@ -61,19 +104,30 @@ mad_2 <- voters %>%
 
 ```{r mad_lib_3, echo=FALSE}
 
+# This r chunk assigns two objects to insert in-line for mad lib 3
+
+# Again, I started by selecting just the relevant columns (household_gun_owner
+# and statements_gun_rights) just to make the data easy to see as I was working
+# with it, but took out those lines of code after I finished to make the code
+# more concise. Filtered here to keep just those who said there wasn't a gun in
+# their household (household_gun_owner == 3) and to keep just those values under
+# statements_gun_rights that mapped to strongly agree/agree/disagree/strongly
+# disagree (i.e. filtering out the values 888 for "not asked" and 999 for "not
+# sure"). Then took the mean of the values remaining to find the average
+# agreement score. Rounded to two digits for nice formatting.
+
 no_guns <- voters %>% 
-  select(statements_gun_rights,
-         household_gun_owner) %>% 
   filter(household_gun_owner == 3,
          statements_gun_rights == 1:4) %>% 
   summarize(mean(statements_gun_rights)) %>% 
   round(digits = 2)
 
+# Exactly the same process as above, except I filter for household_gun_owner ==
+# 1:2, so I get only those who said that they or someone in their household DO
+# own a gun.
+
 have_guns <- voters %>% 
-  select(statements_gun_rights,
-         household_gun_owner) %>% 
-  filter(household_gun_owner == 1:2, # |
-#           household_gun_owner == 999,       should I include this? No, right?
+  filter(household_gun_owner == 1:2,
          statements_gun_rights == 1:4) %>% 
   summarize(mean(statements_gun_rights)) %>% 
   round(digits = 2)
@@ -84,35 +138,58 @@ have_guns <- voters %>%
 
 ```{r mad_lib_4, echo=FALSE}
 
+# This r chunk assigns two objects to insert in-line in mad lib 4
+
+# This one gave me grief for a while, but then the "use group_by(), count(), and
+# arrange(desc(n))" suggestion on Piazza really came to the rescue. Using
+# mutate() to add a new column with the factor names was another useful tip I
+# got from Piazza (thanks, Preceptor!). I added as.character() around the
+# as.factor() conversion so I'd be able to easily pull the values out as
+# strings, and then ran as.data.frame() so I could easily slice() the row and
+# pull() the columns I wanted. Note that the filter command is looking for (age
+# < 30), which in theory is different from the 18-30 range the problem asks for,
+# but I ran min(age) and found that the lowest value was 30, so I made the code
+# more concise by eliminating the (age >= 18) line I otherwise would have
+# needed.
+
 mad_4a <- voters %>% 
   filter(age < 30) %>% 
   group_by(religion) %>% 
   count(religion) %>% 
   arrange(desc(n)) %>% 
-  mutate(religion_names = as_factor(religion)) %>% 
-  mutate(religion_names = as.character(religion_names)) %>% 
+  mutate(religion_names = as.character(as_factor(religion))) %>% 
   as.data.frame() %>% 
   slice(1) %>% 
   pull(religion_names)
+
+# Same process as above, except this time instead of filtering for those under
+# age 30, I filtered for (age >= 30).
 
 mad_4b <- voters %>% 
   filter(age >= 30) %>% 
   group_by(religion) %>% 
   count(religion) %>% 
   arrange(desc(n)) %>% 
-  mutate(religion_names = as_factor(religion)) %>% 
-  mutate(religion_names = as.character(religion_names)) %>% 
+  mutate(religion_names = as.character(as_factor(religion))) %>% 
   as.data.frame() %>% 
   slice(1) %>% 
   pull(religion_names)
 
-# AARRGGGHHHH
-
 ```
 
-**ML 4)** Another set of questions asks about religion. The first ranked category of religion for the age group of people 18-30 (don’t include 30) is **"`r mad_4a`."** The first-ranked religion category for people 30 and older is **“`r mad_4b`.”**
+**ML 4)** Another set of questions asks about religion. The first ranked category of religion for the age group of people 18-30 is **"`r mad_4a`."** The first-ranked religion category for people 30 and older is **“`r mad_4b`.”**
 
 ```{r mad_lib_5, echo=FALSE}
+
+# This r chunk assigns two objects to insert in-line in mad lib 5
+
+# I use a very similar process to that in mad lib 4, filtering for the age group
+# first, then counting the occurrences of each religion, adding a column with
+# religion names, putting in descending order, and coercing the data into a
+# dataframe structure. I then add a new column, rank, with values 1:14 (I
+# checked beforehand to see how many observations I had). Filtering for
+# (religion_names == "Nothing in particular") and pulling the rank value tells
+# me where the "nones" ranked in this age category.
 
 mad_5a <- voters %>% 
   filter(age < 30) %>% 
@@ -124,6 +201,8 @@ mad_5a <- voters %>%
   mutate(rank = 1:14) %>% 
   filter(religion_names == "Nothing in particular") %>% 
   pull(rank)
+
+# Identical process to the above, except this time I filter for (age >= 30).
 
 mad_5b <- voters %>% 
   filter(age >= 30) %>% 
@@ -144,14 +223,26 @@ mad_5b <- voters %>%
 
 ```{r mad_lib_6, echo=FALSE}
 
+# This r chunk assigns an object to insert in-line in mad lib 6
+
+# Very similar process to that used in mad libs 4 and 5. Filter first, to keep
+# only those values where religion is "nothing in particular" (using the
+# codebook to know that the numerical factor equivalent is 12) and
+# statements_gun_rights was asked (!= 888). (It appears that all respondents
+# were asked for their religion.) I then group_by(), count(), and
+# arrange(desc(n)) to find the counts for each response to the question about
+# gun rights and put them in descending order. I add a new column (gun_position)
+# for the factor labels, converting it to a character string. I coerce all
+# values into a dataframe, then slice() and pull() to get just the most popular
+# position.
+
 mad_6 <- voters %>% 
   filter(religion == 12,
          statements_gun_rights != 888) %>% 
   group_by(statements_gun_rights) %>% 
   count(statements_gun_rights) %>% 
   arrange(desc(n)) %>% 
-  mutate(gun_position = as_factor(statements_gun_rights)) %>% 
-  mutate(gun_position = as.character(gun_position)) %>% 
+  mutate(gun_position = as.character(as_factor(statements_gun_rights))) %>% 
   as.data.frame() %>% 
   slice(1) %>% 
   pull(gun_position)
@@ -162,9 +253,11 @@ mad_6 <- voters %>%
 
 ## Question 2: Simulations with List Columns
 
-### 2a)
+#### 2a)
 
 ```{r question_2a, echo=FALSE}
+
+# 
 
 draw_cards <- function(n) {
   cards <- c("diamonds", "hearts", "spades", "clubs")
@@ -175,7 +268,7 @@ draw_cards <- function(n) {
 
 I wrote a function to sample the suit of n cards.
 
-### 2b)
+#### 2b)
 
 ```{r question_2b, echo=FALSE}
 
@@ -185,7 +278,7 @@ two_cards_ten_times <- tibble(draws = map(rep(2, 10), draw_cards))
 
 I made a tibble that shows the result of drawing 2 cards 10 times.
 
-### 2c)
+#### 2c)
 
 ```{r question_2c, echo=FALSE}
 
@@ -209,7 +302,7 @@ two_cards_ten_times %<>%
 
 I added two columns (one for each card drawn) which say whether the card was red (hearts or diamonds) or not.
 
-### 2d)
+#### 2d)
 
 I added a third new column, showing the color outcome of each draw, and produced the following table:
 
@@ -233,7 +326,7 @@ two_cards_ten_times %>%
 
 ```
 
-### 2e)
+#### 2e)
 
 ```{r question_2e, echo=FALSE}
 
