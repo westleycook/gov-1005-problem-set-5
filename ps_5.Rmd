@@ -257,9 +257,13 @@ mad_6 <- voters %>%
 
 ```{r question_2a, echo=FALSE}
 
-# 
+# This r chunk defines a function to draw n cards. It's pretty straightforward,
+# taking n as a parameter and throwing an error if n is not numeric. It defines
+# "cards" to just have the suit of the card, and uses sample() to pull from
+# cards n times, replacing after each draw.
 
 draw_cards <- function(n) {
+  stopifnot(is.numeric(n))
   cards <- c("diamonds", "hearts", "spades", "clubs")
   sample(cards, n, replace = TRUE)
 }
@@ -272,6 +276,10 @@ I wrote a function to sample the suit of n cards.
 
 ```{r question_2b, echo=FALSE}
 
+# This r chunk creates a one-column tibble, drawing two cards ten times and
+# saving those draws in a list-column named "draws". The map() function passes
+# the value 2 into the function draw_cards, repeating ten times.
+
 two_cards_ten_times <- tibble(draws = map(rep(2, 10), draw_cards))
 
 ```
@@ -282,13 +290,29 @@ I made a tibble that shows the result of drawing 2 cards 10 times.
 
 ```{r question_2c, echo=FALSE}
 
+# This r chunk adds two new columns to the two_cards_ten_times tibble. Both
+# columns are type lgl; the first shows TRUE if the first drawn card is red, and
+# the second shows TRUE if the second drawn card is red.
+
+# Using the assignment pipe operator from magrittr to modify two_cards_ten_times
+
 two_cards_ten_times %<>%
+  
+# Using mutate() to create a new column; map_lgl() takes the draws column and
+# cycles through each element of it, using ifelse() to assign the value TRUE to
+# first_red if the first drawn card is either a heart or a diamond, and FALSE
+# otherwise.
+  
   mutate(
     first_red = map_lgl(draws,
                         ~ ifelse(.[[1]][1] == "hearts" |
                                    .[[1]][1] == "diamonds",
                                  TRUE,
                                  FALSE)))
+
+# Same process as above, but this time the new column is second_red, and the
+# code is modified to assign TRUE to second_red if the SECOND card in draws is
+# either a heart or diamond, and FALSE otherwise
 
 two_cards_ten_times %<>%
   mutate(
@@ -308,12 +332,23 @@ I added a third new column, showing the color outcome of each draw, and produced
 
 ```{r question_2d, echo=FALSE}
 
+# This r chunk adds a third column new column (fourth overall) to the
+# two_cards_ten_times tibble, and displays the tibble in a nice gt table.
+
+# Again using the assignment pipe operator from magrittr, I modify
+# two_cards_ten_times to add a new column. case_when() assigns the value "Both
+# red" to outcome when first_red and second_red are both true, "Both black" when
+# they're both false, and "Mixed" otherwise.
+
 two_cards_ten_times %<>%
   mutate(outcome = case_when(
     first_red == TRUE & second_red == TRUE ~ "Both red",
     first_red == FALSE & second_red == FALSE ~ "Both black",
     TRUE ~ "Mixed"
   ))
+
+# I pipe two_cards_ten_times into gt() to produce a nice table, adding a title
+# and subtitle while adjusting the displayed column titles
 
 two_cards_ten_times %>% 
   gt() %>%
@@ -330,28 +365,51 @@ two_cards_ten_times %>%
 
 ```{r question_2e, echo=FALSE}
 
+# This r chunk creates a simulation identical to the table created above, except
+# it replicates the drawing 1,000 times instead of just 10. It then takes the
+# proportion of draws that are "mixed" (one red and one black card) and prints
+# it in the knitted .html.
+
+# Copied and pasted the code I used above to create the two_cards_ten_times
+# tibble, modifying it just to change the 10 replications to 1,000.
+
 simulation_1000 <- tibble(draws = map(rep(2, 1000), draw_cards)) %>% 
+  
+# Copied and pasted the first part of code from 2c, adding a column to show if
+# the first drawn card is red
+  
   mutate(
     first_red = map_lgl(draws,
                         ~ ifelse(.[[1]][1] == "hearts" |
                                    .[[1]][1] == "diamonds",
                                  TRUE,
-                                 FALSE)))
+                                 FALSE))) %>% 
 
-simulation_1000 %<>%
+# Copied and pasted the second part of code from 2c, adding a column to show if
+# the second drawn card is red  
+  
   mutate(
     second_red = map_lgl(draws,
                         ~ ifelse(.[[2]][1] == "hearts" |
                                    .[[2]][1] == "diamonds",
                                  TRUE,
-                                 FALSE)))
+                                 FALSE))) %>% 
+
+# Copied and pasted the code from 2d, adding a column to show the draw outcome
+# (both red, both black, or mixed)
   
-simulation_1000 %<>%
-  mutate(outcome = case_when(
-    first_red == TRUE & second_red == TRUE ~ "Both red",
-    first_red == FALSE & second_red == FALSE ~ "Both black",
-    TRUE ~ "Mixed")
+  mutate(
+    outcome = case_when(
+      first_red == TRUE & second_red == TRUE ~ "Both red",
+      first_red == FALSE & second_red == FALSE ~ "Both black",
+      TRUE ~ "Mixed")
   )
+
+# Finally, something new: I add a new column (mixed) which takes the value TRUE
+# if outcome is "mixed", and FALSE otherwise. I then take the mean of that
+# column to measure the proportion of outcomes which are mixed, and use
+# percent() to format it nicely, with two decimal places shown. I assign the
+# result to an object (percent_mixed) to insert in-line below.
   
 percent_mixed <- simulation_1000 %>% 
   mutate(mixed = ifelse(outcome == "Mixed",
