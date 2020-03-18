@@ -5,6 +5,8 @@ date: "3/18/2020"
 output: html_document
 ---
 
+##### Worked With: None
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 
@@ -19,7 +21,7 @@ library(reprex)
 
 ```
 
-## Mad Libs
+## Question 1: Mad Libs
 
 ```{r mad_lib_1, echo=FALSE}
 
@@ -49,7 +51,7 @@ mad_2 <- voters %>%
          statements_gun_rights != 888) %>% 
   mutate(gun_owner = ifelse(household_gun_owner == 1,
                             TRUE,
-                            FALSE)) %>% 
+                            FALSE)) %>%  
   summarize(mean(gun_owner)) %>% 
   percent(digits = 2)
 
@@ -289,7 +291,9 @@ ggplot(pop_w_pct, aes(grade, pct)) +
   theme_classic() +
   labs(title = "University Composition by Grade",
        subtitle = "Entire Study Population") +
-  scale_y_continuous(labels = scales::percent)
+  scale_y_continuous(labels = scales::percent) +
+  geom_text(aes(label = percent(pct, digits = 1),
+                vjust = -0.5))
 
 # need to add text labels showing value in each column
 
@@ -326,7 +330,7 @@ samples %>%
 
 ```
 
-## Question 5: 
+## Question 5: Sample Size
 
 ```{r question_5, echo=FALSE}
 
